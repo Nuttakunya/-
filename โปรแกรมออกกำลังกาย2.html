@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>โปรแกรมแนะนำการออกกำลังกาย</title>
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #f0f8ff;
+      padding: 30px;
+      max-width: 700px;
+      margin: auto;
+    }
+    h1 {
+      color: #0077cc;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      padding: 8px;
+      margin-top: 5px;
+      width: 100%;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e6f4ff;
+      border-left: 4px solid #0077cc;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">โปรแกรมแนะนำการออกกำลังกาย</h1>
+  <label>Language / ภาษา:
+    <select id="language" onchange="changeLanguage()">
+      <option value="th">ไทย</option>
+      <option value="en">English</option>
+    </select>
+  </label>
+  <form id="exerciseForm">
+    <label id="ageLabel">อายุ (ปี):
+      <input type="number" id="age" required>
+    </label>
+    <label id="genderLabel">เพศ:
+      <select id="gender">
+        <option value="male">ชาย</option>
+        <option value="female">หญิง</option>
+      </select>
+    </label>
+    <label id="weightLabel">น้ำหนัก (กก.):
+      <input type="number" id="weight" required>
+    </label>
+    <label id="heightLabel">ส่วนสูง (ซม.):
+      <input type="number" id="height" required>
+    </label>
+    <label id="goalLabel">เป้าหมาย:
+      <select id="goal">
+        <option value="lose">ลดน้ำหนัก</option>
+        <option value="gain">เพิ่มกล้ามเนื้อ</option>
+        <option value="maintain">รักษาสุขภาพ</option>
+      </select>
+    </label>
+    <label id="activityLabel">ระดับกิจกรรม:
+      <select id="activity">
+        <option value="low">เบา (นั่งทำงานส่วนใหญ่)</option>
+        <option value="medium">ปานกลาง (เคลื่อนไหวทั่วไป)</option>
+        <option value="high">หนัก (ออกกำลังกายประจำ)</option>
+      </select>
+    </label>
+    <button type="button" id="recommendButton" onclick="generateRecommendation()">แนะนำโปรแกรม</button>
+  </form>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    const texts = {
+      th: {
+        title: "โปรแกรมแนะนำการออกกำลังกาย",
+        age: "อายุ (ปี):",
+        gender: "เพศ:",
+        weight: "น้ำหนัก (กก.):",
+        height: "ส่วนสูง (ซม.):",
+        goal: "เป้าหมาย:",
+        activity: "ระดับกิจกรรม:",
+        bmiStatus: ["น้ำหนักน้อย", "น้ำหนักปกติ", "น้ำหนักเกิน", "อ้วน"],
+        food: {
+          lose: "อาหารแนะนำ: อกไก่ ผัก ผลไม้ น้ำเปล่า",
+          gain: "อาหารแนะนำ: ข้าวกล้อง ไข่ต้ม นมเวย์โปรตีน",
+          maintain: "อาหารแนะนำ: ข้าวสวย ผัก ต้มยำ ไข่เจียว"
+        },
+        calories: {
+          lose: "แคลอรี่ที่แนะนำต่อวัน: ประมาณ 1500-1800 กิโลแคลอรี่",
+          gain: "แคลอรี่ที่แนะนำต่อวัน: ประมาณ 2500-3000 กิโลแคลอรี่",
+          maintain: "แคลอรี่ที่แนะนำต่อวัน: ประมาณ 2000-2200 กิโลแคลอรี่"
+        },
+        time: {
+          lose: "เวลาออกกำลังกายที่เหมาะสม: เช้า หรือ เย็นอย่างน้อย 30 นาที",
+          gain: "เวลาออกกำลังกายที่เหมาะสม: บ่าย-เย็น หลังรับประทานอาหาร",
+          maintain: "เวลาออกกำลังกายที่เหมาะสม: เวลาใดก็ได้วันละ 20-30 นาที"
+        },
+        recommendations: {
+          lose: "แนะนำให้ออกกำลังกายแบบคาร์ดิโอ เช่น เดินเร็ว วิ่ง ปั่นจักรยาน 4-5 วัน/สัปดาห์ ร่วมกับควบคุมอาหาร",
+          gain: "แนะนำให้ออกกำลังกายแบบเวทเทรนนิ่ง เพิ่มโปรตีนในอาหาร พักผ่อนเพียงพอ",
+          maintain: "แนะนำให้ออกกำลังกายสม่ำเสมอ 3-4 วัน/สัปดาห์ เช่น เดินเร็ว โยคะ ว่ายน้ำ เพื่อรักษาสุขภาพ"
+        },
+        plan: {
+          lose: ["จันทร์: เดินเร็ว 30 นาที", "อังคาร: วิ่งเบาๆ 30 นาที", "พุธ: ปั่นจักรยาน 40 นาที", "พฤหัสฯ: โยคะเบาๆ 30 นาที", "ศุกร์: เดินเร็ว 30 นาที", "เสาร์: พักผ่อน", "อาทิตย์: วิ่ง 30 นาที"],
+          gain: ["จันทร์: เวทเทรนนิ่ง (อก/แขน) 45 นาที", "อังคาร: คาร์ดิโอเบาๆ 20 นาที", "พุธ: เวทเทรนนิ่ง (ขา) 45 นาที", "พฤหัสฯ: โยคะ 30 นาที", "ศุกร์: เวท (ไหล่/หลัง) 45 นาที", "เสาร์: เดินเร็ว 30 นาที", "อาทิตย์: พักผ่อน"],
+          maintain: ["จันทร์: เดินเร็ว 30 นาที", "อังคาร: โยคะ 30 นาที", "พุธ: ว่ายน้ำ 30 นาที", "พฤหัสฯ: วิ่งเบาๆ 25 นาที", "ศุกร์: ปั่นจักรยาน 30 นาที", "เสาร์: โยคะ 30 นาที", "อาทิตย์: พักผ่อน"]
+        },
+        recommendButton: "แนะนำโปรแกรม",
+        weeklyPlan: "แผนประจำสัปดาห์"
+      },
+      en: {
+        title: "Exercise Recommendation Program",
+        age: "Age (years):",
+        gender: "Gender:",
+        weight: "Weight (kg):",
+        height: "Height (cm):",
+        goal: "Goal:",
+        activity: "Activity Level:",
+        bmiStatus: ["Underweight", "Normal", "Overweight", "Obese"],
+        food: {
+          lose: "Recommended food: Chicken breast, vegetables, fruits, water",
+          gain: "Recommended food: Brown rice, boiled eggs, whey protein",
+          maintain: "Recommended food: Steamed rice, vegetables, light Thai food"
+        },
+        calories: {
+          lose: "Suggested daily calories: About 1500–1800 kcal",
+          gain: "Suggested daily calories: About 2500–3000 kcal",
+          maintain: "Suggested daily calories: About 2000–2200 kcal"
+        },
+        time: {
+          lose: "Suggested time: Morning or evening at least 30 minutes",
+          gain: "Suggested time: Afternoon-evening after meals",
+          maintain: "Suggested time: Anytime, 20–30 minutes/day"
+        },
+        recommendations: {
+          lose: "Recommended: Cardio such as walking, jogging, biking 4-5 days/week with dietary control",
+          gain: "Recommended: Weight training, protein-rich meals, enough rest",
+          maintain: "Recommended: Regular exercise 3-4 days/week like walking, yoga, swimming"
+        },
+        plan: {
+          lose: ["Mon: Brisk walk 30 min", "Tue: Light jogging 30 min", "Wed: Biking 40 min", "Thu: Light yoga 30 min", "Fri: Brisk walk 30 min", "Sat: Rest", "Sun: Jog 30 min"],
+          gain: ["Mon: Weight training (chest/arms) 45 min", "Tue: Light cardio 20 min", "Wed: Weight training (legs) 45 min", "Thu: Yoga 30 min", "Fri: Weight (shoulders/back) 45 min", "Sat: Brisk walk 30 min", "Sun: Rest"],
+          maintain: ["Mon: Brisk walk 30 min", "Tue: Yoga 30 min", "Wed: Swimming 30 min", "Thu: Jogging 25 min", "Fri: Biking 30 min", "Sat: Yoga 30 min", "Sun: Rest"]
+        },
+        recommendButton: "Generate Recommendation",
+        weeklyPlan: "Weekly Plan"
+      }
+    };
+
+    function changeLanguage() {
+      const lang = document.getElementById('language').value;
+      document.getElementById('title').innerText = texts[lang].title;
+      document.getElementById('ageLabel').innerText = texts[lang].age;
+      document.getElementById('genderLabel').innerText = texts[lang].gender;
+      document.getElementById('weightLabel').innerText = texts[lang].weight;
+      document.getElementById('heightLabel').innerText = texts[lang].height;
+      document.getElementById('goalLabel').innerText = texts[lang].goal;
+      document.getElementById('activityLabel').innerText = texts[lang].activity;
+      document.getElementById('recommendButton').innerText = texts[lang].recommendButton;
+    }
+
+    function generateRecommendation() {
+      const lang = document.getElementById('language').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+      const height = parseFloat(document.getElementById('height').value);
+      const goal = document.getElementById('goal').value;
+
+      let bmi = weight / ((height / 100) ** 2);
+      let statusIndex = bmi < 18.5 ? 0 : bmi < 24.9 ? 1 : bmi < 29.9 ? 2 : 3;
+
+      let result = `<strong>BMI:</strong> ${bmi.toFixed(2)} (${texts[lang].bmiStatus[statusIndex]})<br><br>`;
+      result += `<strong>${texts[lang].recommendations[goal]}</strong><br>`;
+      result += `<br>${texts[lang].food[goal]}<br>`;
+      result += `${texts[lang].calories[goal]}<br>`;
+      result += `${texts[lang].time[goal]}<br><br>`;
+
+      result += `<strong>${texts[lang].weeklyPlan}:</strong><ul>`;
+      texts[lang].plan[goal].forEach(day => {
+        result += `<li>${day}</li>`;
+      });
+      result += `</ul>`;
+
+      document.getElementById('result').innerHTML = result;
+    }
+  </script>
+</body>
+</html>
